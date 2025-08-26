@@ -1,0 +1,499 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Moyasar embedded form styling - Enhanced & Organized */
+.mysr-form {
+  direction: rtl;
+  font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Container styling */
+.mysr-form iframe {
+  border-radius: 1rem !important;
+  border: none !important;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  min-height: 450px !important;
+  width: 100% !important;
+}
+
+/* Global form styling - targeting Moyasar's internal elements */
+.mysr-form *,
+.mysr-form iframe *,
+.mysr-form [class*="mysr"],
+.mysr-form [class*="form"] {
+  font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  box-sizing: border-box !important;
+}
+
+/* Form container layout */
+.mysr-form .mysr-form,
+.mysr-form .form,
+.mysr-form form {
+  padding: 2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important;
+  background: transparent !important;
+}
+
+/* Label styling - Enhanced positioning */
+.mysr-form label,
+.mysr-form .form-label,
+.mysr-form .mysr-label {
+  font-weight: 600 !important;
+  color: #374151 !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 0.75rem !important;
+  display: block !important;
+  text-align: right !important;
+  line-height: 1.4 !important;
+}
+
+/* Input field styling - Better organization */
+.mysr-form input[type="text"],
+.mysr-form input[type="email"],
+.mysr-form input[type="tel"],
+.mysr-form .mysr-input,
+.mysr-form .form-control {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 2px solid #e2e8f0 !important;
+  border-radius: 0.75rem !important;
+  padding: 1rem 1.25rem !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  color: #1e293b !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+  width: 100% !important;
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Input focus state */
+.mysr-form input[type="text"]:focus,
+.mysr-form input[type="email"]:focus,
+.mysr-form input[type="tel"]:focus,
+.mysr-form .mysr-input:focus,
+.mysr-form .form-control:focus {
+  outline: none !important;
+  border-color: #0077c2 !important;
+  box-shadow: 0 0 0 4px rgba(0, 119, 194, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  background: #ffffff !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Form group styling - Better spacing */
+.mysr-form .form-group,
+.mysr-form .mysr-form-group,
+.mysr-form .field-group {
+  margin-bottom: 1.5rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Two column layout for expiry and CVC */
+.mysr-form .form-row,
+.mysr-form .row,
+.mysr-form .two-cols {
+  display: flex !important;
+  gap: 1rem !important;
+  margin-bottom: 1.5rem !important;
+  flex-direction: row !important;
+}
+
+.mysr-form .form-row > *,
+.mysr-form .row > *,
+.mysr-form .two-cols > * {
+  flex: 1 !important;
+}
+
+.mysr-form .form-row .form-group,
+.mysr-form .row .form-group,
+.mysr-form .two-cols .form-group {
+  margin-bottom: 0 !important;
+}
+
+/* Button styling - Enhanced */
+.mysr-form button,
+.mysr-form .btn,
+.mysr-form .mysr-button,
+.mysr-form input[type="submit"] {
+  background: linear-gradient(135deg, #0077c2 0%, #0062a3 100%) !important;
+  border: none !important;
+  border-radius: 0.75rem !important;
+  padding: 1.25rem 2rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: white !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  width: 100% !important;
+  margin-top: 2rem !important;
+  text-align: center !important;
+  letter-spacing: 0.5px !important;
+}
+
+.mysr-form button:hover,
+.mysr-form .btn:hover,
+.mysr-form .mysr-button:hover {
+  background: linear-gradient(135deg, #005a94 0%, #004d7a 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Amount display styling - Better positioning */
+.mysr-form .amount,
+.mysr-form .mysr-amount,
+.mysr-form .total-amount {
+  text-align: center !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: #0077c2 !important;
+  margin-bottom: 2rem !important;
+  padding: 1.25rem !important;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+  border-radius: 0.75rem !important;
+  border: 1px solid #93c5fd !important;
+  order: -1 !important;
+}
+
+/* Security badges - Better alignment */
+.mysr-form .security-badges,
+.mysr-form .badges,
+.mysr-form .trust-badges {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  margin: 1.5rem 0 !important;
+  padding: 1rem !important;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+  border-radius: 0.75rem !important;
+  border: 1px solid #cbd5e1 !important;
+  font-size: 0.85rem !important;
+  color: #64748b !important;
+}
+
+/* Card number field - Special styling */
+.mysr-form input[placeholder*="رقم"],
+.mysr-form input[placeholder*="البطاقة"],
+.mysr-form .card-number {
+  font-family: 'Courier New', monospace, 'Cairo' !important;
+  letter-spacing: 2px !important;
+  font-size: 1.1rem !important;
+}
+
+/* Error styling */
+.mysr-form .error,
+.mysr-form .mysr-error {
+  color: #dc2626 !important;
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 0.5rem !important;
+  padding: 0.75rem !important;
+  font-size: 0.875rem !important;
+  margin-top: 0.5rem !important;
+  text-align: right !important;
+}
+
+/* Swiper CSS */
+@import 'swiper/css';
+@import 'swiper/css/navigation';
+@import 'swiper/css/pagination';
+@import 'swiper/css/effect-fade';
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Cairo', sans-serif;
+  }
+  
+  body {
+    @apply antialiased bg-gray-50 text-gray-900;
+    direction: rtl;
+    font-family: 'Cairo', sans-serif;
+  }
+  
+  * {
+    font-family: 'Cairo', sans-serif;
+  }
+}
+
+@layer components {
+  .glass-effect {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl;
+  }
+  
+  .gradient-primary {
+    @apply bg-gradient-to-r from-brand-blue to-brand-blueSecondary;
+  }
+  
+  .gradient-secondary {
+    @apply bg-gradient-to-r from-brand-blueSecondary to-brand-green;
+  }
+  
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-brand-blue to-brand-blueSecondary text-white rounded-xl font-semibold 
+           hover:shadow-lg transform hover:scale-105 transition-all duration-200
+           shadow-md active:scale-95;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl font-semibold 
+           hover:bg-gray-50 hover:border-gray-300 transform hover:scale-105 transition-all duration-200
+           shadow-md active:scale-95;
+  }
+  
+  .card {
+    @apply bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300;
+  }
+  
+  .input {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none 
+           focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+  }
+  
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Enhanced Product Detail Styles */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .border-3 {
+    border-width: 3px;
+  }
+  
+  .product-image-hover {
+    transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .product-image-hover:hover {
+    transform: scale(1.05);
+  }
+  
+  .glass-morphism {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  
+  .gradient-text {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .product-card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .product-card-hover:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+  
+  .feature-card {
+    transition: all 0.3s ease;
+    transform-origin: center;
+  }
+  
+  .feature-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-stops));
+  }
+  
+  /* Enhanced Product Detail Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  /* Loading Progress Bar */
+  .loading-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8, #3b82f6);
+    background-size: 200% 100%;
+    animation: loading 2s ease-in-out infinite;
+    z-index: 9999;
+  }
+  
+  @keyframes loading {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-lg;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* Swiper custom styles */
+.swiper-pagination-bullet {
+  @apply bg-white opacity-50;
+}
+
+.swiper-pagination-bullet-active {
+  @apply opacity-100 bg-blue-600;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  @apply text-white;
+}
+
+.swiper-button-next:after,
+.swiper-button-prev:after {
+  font-size: 20px;
+}
+
+/* Loading animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .dark body {
+    @apply bg-gray-900 text-white;
+  }
+}
