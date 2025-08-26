@@ -48,12 +48,36 @@ const OrderSuccess = () => {
         setOrder(response.order);
         
         // Check if we have a payment_id from Moyasar redirect
-        const paymentId = searchParams.get('payment_id') || searchParams.get('id') || searchParams.get('tap_id');
+        const paymentId = searchParams.get('id') || searchParams.get('payment_id') || searchParams.get('tap_id');
+        const paymentStatus = searchParams.get('status');
+        const paymentMessage = searchParams.get('message');
+        
         console.log('URL params:', Object.fromEntries(searchParams));
         console.log('Payment ID from URL:', paymentId);
+        console.log('Payment Status from URL:', paymentStatus);
+        console.log('Payment Message from URL:', paymentMessage);
         console.log('Order payment status:', response.order.payment?.status);
         
-        if (paymentId && response.order.payment?.method === 'card' && response.order.payment?.status === 'pending') {
+        // Check if payment is already confirmed by Moyasar callback
+        if (paymentStatus === 'paid' && paymentMessage === 'APPROVED' && paymentId) {
+          // Payment confirmed by Moyasar, try to confirm with backend
+          try {
+            console.log('Payment confirmed by Moyasar, confirming with backend:', paymentId);
+            const confirmResponse = await paymentService.confirmPayment(id, paymentId);
+            if (confirmResponse.success) {
+              setPaymentConfirmed(true);
+              dispatch(clearCart());
+              toast.success('تم تأكيد الدفع بنجاح!');
+              setOrder(confirmResponse.order);
+            } else {
+              // Start polling for status
+              checkPaymentStatus();
+            }
+          } catch (error) {
+            console.error('Error confirming payment:', error);
+            checkPaymentStatus();
+          }
+        } else if (paymentId && response.order.payment?.method === 'card' && response.order.payment?.status === 'pending') {
           // Confirm payment with backend
           try {
             console.log('Confirming payment with ID:', paymentId);
