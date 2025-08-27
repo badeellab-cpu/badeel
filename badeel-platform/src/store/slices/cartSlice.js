@@ -91,7 +91,7 @@ const cartSlice = createSlice({
       state.totalItems = 0;
       state.totalAmount = 0;
       localStorage.removeItem('cart');
-      toast.success('تم تفريغ السلة');
+      // Removed toast to avoid showing notifications when cart is cleared
     },
     
     initializeCart: (state) => {

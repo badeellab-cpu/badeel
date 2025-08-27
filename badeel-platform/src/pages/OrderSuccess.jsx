@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
-import { toast } from 'react-hot-toast';
 import { clearCart } from '../store/slices/cartSlice';
 import {
   CheckCircleIcon,
@@ -36,6 +35,8 @@ const OrderSuccess = () => {
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [confirmationInProgress, setConfirmationInProgress] = useState(false);
+  // No toast notifications on this page per requirement
 
   // Fetch order details and handle payment confirmation
   useEffect(() => {
@@ -45,7 +46,17 @@ const OrderSuccess = () => {
         
         // First, get order details
         const response = await ordersAPI.getOrder(id);
-        setOrder(response.order);
+        console.log('Order API response:', response);
+        
+        // Check if response has order data (might be in data or order property)
+        const orderData = response?.data || response?.order || response;
+        if (!orderData || !orderData._id) {
+          console.error('Invalid order response - no order data found:', response);
+          setLoading(false);
+          return;
+        }
+        
+        setOrder(orderData);
         
         // Check if we have a payment_id from Moyasar redirect
         const paymentId = searchParams.get('id') || searchParams.get('payment_id') || searchParams.get('tap_id');
@@ -56,28 +67,36 @@ const OrderSuccess = () => {
         console.log('Payment ID from URL:', paymentId);
         console.log('Payment Status from URL:', paymentStatus);
         console.log('Payment Message from URL:', paymentMessage);
-        console.log('Order payment status:', response.order.payment?.status);
+        console.log('Order payment status:', orderData?.payment?.status);
         
-        // Check if payment is already confirmed by Moyasar callback
-        if (paymentStatus === 'paid' && paymentMessage === 'APPROVED' && paymentId) {
-          // Payment confirmed by Moyasar, try to confirm with backend
+        // Always try to confirm payment if we have paymentId from Moyasar
+        if (paymentId && !confirmationInProgress) {
+          console.log('Payment ID found, confirming with backend:', paymentId);
+          console.log('Payment status from URL:', paymentStatus);
+          console.log('Payment message from URL:', paymentMessage);
+          
+          setConfirmationInProgress(true);
           try {
-            console.log('Payment confirmed by Moyasar, confirming with backend:', paymentId);
             const confirmResponse = await paymentService.confirmPayment(id, paymentId);
+            console.log('Backend confirmation response:', confirmResponse);
+            
             if (confirmResponse.success) {
               setPaymentConfirmed(true);
               dispatch(clearCart());
-              toast.success('تم تأكيد الدفع بنجاح!');
               setOrder(confirmResponse.order);
+              // Toasts disabled on this page
             } else {
-              // Start polling for status
+              console.log('Confirmation failed, starting status polling...');
               checkPaymentStatus();
             }
           } catch (error) {
             console.error('Error confirming payment:', error);
+            // Try to check status instead
             checkPaymentStatus();
+          } finally {
+            setConfirmationInProgress(false);
           }
-        } else if (paymentId && response.order.payment?.method === 'card' && response.order.payment?.status === 'pending') {
+        } else if (false) { // Disable this condition
           // Confirm payment with backend
           try {
             console.log('Confirming payment with ID:', paymentId);
@@ -87,46 +106,31 @@ const OrderSuccess = () => {
             if (confirmResponse.success) {
               setPaymentConfirmed(true);
               dispatch(clearCart());
-              toast.success('تم تأكيد الدفع بنجاح!');
+              // Toasts disabled on this page
               // Refresh order details
               const updatedOrder = await ordersAPI.getOrder(id);
-              setOrder(updatedOrder.order);
+              setOrder(updatedOrder.data || updatedOrder.order || updatedOrder);
             }
           } catch (error) {
             console.error('Payment confirmation error:', error);
             // Still check payment status in case it was already confirmed
             checkPaymentStatus();
           }
-        } else if (response.order.payment?.status === 'paid' || response.order.status === 'confirmed') {
+        } else if (orderData.payment?.status === 'paid' || orderData.status === 'confirmed') {
           // Payment already confirmed
           setPaymentConfirmed(true);
           dispatch(clearCart());
-        } else if (response.order.payment?.method === 'card' && response.order.payment?.status === 'pending') {
-          // No payment_id but order is pending - try to confirm without payment ID
-          // This handles cases where Moyasar doesn't send payment_id in URL
-          console.log('No payment ID in URL, trying to confirm order directly');
-          try {
-            const confirmResponse = await paymentService.confirmPayment(id, null);
-            if (confirmResponse.success && confirmResponse.order.payment?.status === 'paid') {
-              setPaymentConfirmed(true);
-              dispatch(clearCart());
-              toast.success('تم تأكيد الدفع بنجاح!');
-              setOrder(confirmResponse.order);
-            } else {
-              // Still pending, start polling
-              checkPaymentStatus();
-            }
-          } catch (error) {
-            console.error('Error checking order status:', error);
-            checkPaymentStatus();
-          }
-        } else if (response.order.payment?.method === 'cod') {
+        } else if (orderData.payment?.method === 'card' && orderData.payment?.status === 'pending') {
+          // No payment_id but order is pending - just start polling, don't confirm again
+          console.log('No payment ID in URL, order still pending - starting status polling');
+          checkPaymentStatus();
+        } else if (orderData.payment?.method === 'cod') {
           // Cash on delivery - clear cart
           dispatch(clearCart());
         }
       } catch (error) {
         console.error('Error fetching order:', error);
-        toast.error('فشل في جلب تفاصيل الطلب');
+        // Silently fail without toast per requirement
         navigate('/');
       } finally {
         setLoading(false);
@@ -153,9 +157,8 @@ const OrderSuccess = () => {
       } else if (response.payment.status === 'paid') {
         // Refresh order details to get updated status
         const orderResponse = await ordersAPI.getOrder(id);
-        setOrder(orderResponse.order);
+        setOrder(orderResponse.data || orderResponse.order || orderResponse);
         dispatch(clearCart()); // Clear cart when payment is confirmed
-        toast.success('تم تأكيد الدفع بنجاح!');
       }
     } catch (error) {
       console.error('Error checking payment status:', error);

@@ -298,12 +298,8 @@ exports.createOrder = asyncHandler(async (req, res) => {
         notes
     });
 
-    // Reserve products
-    for (const item of processedItems) {
-        await Product.findByIdAndUpdate(item.product, {
-            $inc: { quantity: -item.quantity }
-        });
-    }
+    // Do not decrement stock at order creation to avoid double-deduction.
+    // Stock will be decremented once upon successful payment confirmation.
 
     // Send notification emails
     try {

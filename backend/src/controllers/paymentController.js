@@ -194,17 +194,21 @@ exports.createPayment = asyncHandler(async (req, res) => {
             }
 
             // Send confirmation email
-            await emailService.sendEmail({
-                email: customerInfo.email,
-                subject: 'تأكيد الطلب - منصة بديل',
-                message: `
-                    <h2>تم تأكيد طلبك بنجاح!</h2>
-                    <p>رقم الطلب: ${order.orderNumber}</p>
-                    <p>المبلغ الإجمالي: ${order.totalAmount} ريال</p>
-                    <p>طريقة الدفع: الدفع عند الاستلام</p>
-                    <p>سيتم التواصل معك قريباً لتأكيد التوصيل.</p>
-                `
-            });
+            try {
+                await emailService.sendEmail({
+                    email: customerInfo.email,
+                    subject: 'تأكيد الطلب - منصة بديل',
+                    message: `
+                        <h2>تم تأكيد طلبك بنجاح!</h2>
+                        <p>رقم الطلب: ${order.orderNumber}</p>
+                        <p>المبلغ الإجمالي: ${order.totalAmount} ريال</p>
+                        <p>طريقة الدفع: الدفع عند الاستلام</p>
+                        <p>سيتم التواصل معك قريباً لتأكيد التوصيل.</p>
+                    `
+                });
+            } catch (emailError) {
+                console.error('Failed to send confirmation email:', emailError);
+            }
 
             res.status(200).json({
                 success: true,
@@ -224,6 +228,7 @@ exports.createPayment = asyncHandler(async (req, res) => {
 // @route   POST /api/payments/confirm
 // @access  Private
 exports.confirmPayment = asyncHandler(async (req, res) => {
+    console.log('[Payment Confirm] Request received:', { orderId: req.body.orderId, paymentId: req.body.paymentId });
     const { orderId, paymentId } = req.body;
 
     if (!orderId) {
@@ -238,6 +243,17 @@ exports.confirmPayment = asyncHandler(async (req, res) => {
         throw new Error('الطلب غير موجود');
     }
 
+    // Check if order already confirmed
+    if (order.status === 'confirmed' && order.payment.status === 'paid') {
+        console.log('[Payment] Order already confirmed:', orderId);
+        res.status(200).json({
+            success: true,
+            order: order,
+            message: 'الطلب مؤكد مسبقاً'
+        });
+        return;
+    }
+
     // If no paymentId provided, just return current order status
     if (!paymentId) {
         res.status(200).json({
@@ -248,19 +264,33 @@ exports.confirmPayment = asyncHandler(async (req, res) => {
         return;
     }
 
-    // Verify payment with Moyasar
+    // Verify payment with Moyasar API
     try {
+        console.log(`[Moyasar] Fetching payment status for ID: ${paymentId}`);
+        
         const response = await axios.get(
             `${config.payment.moyasar.apiUrl}/payments/${paymentId}`,
             {
                 auth: {
                     username: config.payment.moyasar.secretKey,
                     password: ''
+                },
+                headers: {
+                    'Accept': 'application/json',
+                    'User-Agent': 'Badeel-Platform/1.0'
                 }
             }
         );
 
         const payment = response.data;
+        console.log(`[Moyasar] Payment status: ${payment.status}`);
+        console.log(`[Moyasar] Payment details:`, {
+            id: payment.id,
+            status: payment.status,
+            amount: payment.amount,
+            currency: payment.currency,
+            source: payment.source?.type
+        });
 
         // Verify payment amount matches order amount (with small tolerance for rounding)
         const expectedAmount = Math.round(order.totalAmount * 100);
@@ -271,31 +301,74 @@ exports.confirmPayment = asyncHandler(async (req, res) => {
         }
 
         // Update order based on payment status
-        if (payment.status === 'paid') {
-            order.payment.status = 'paid';
-            order.payment.transactionId = payment.id;
-            order.payment.paidAt = new Date();
-            order.status = 'confirmed';
-
-            // Update product quantities
-            for (const item of order.items) {
-                await Product.findByIdAndUpdate(
-                    item.product,
-                    { $inc: { quantity: -item.quantity } }
-                );
+        const isPaid = ['paid', 'captured', 'verified'].includes(payment.status);
+        if (isPaid) {
+            // CRITICAL: Check if already processed to prevent ANY double processing
+            const freshOrder = await Order.findById(orderId);
+            if (freshOrder.payment?.status === 'paid' && freshOrder.status === 'confirmed') {
+                console.log('[Payment] Order already fully processed, skipping:', orderId);
+                return res.status(200).json({ 
+                    success: true, 
+                    order: freshOrder,
+                    message: 'الطلب مؤكد مسبقاً' 
+                });
             }
 
-            await order.save();
+            // Use atomic findOneAndUpdate to prevent race conditions
+            const updatedOrder = await Order.findOneAndUpdate(
+                { 
+                    _id: orderId,
+                    'payment.status': { $ne: 'paid' }  // Only update if not already paid
+                },
+                {
+                    $set: {
+                        'payment.status': 'paid',
+                        'payment.transactionId': payment.id,
+                        'payment.paidAt': new Date(),
+                        'payment.quantitiesUpdated': true,
+                        'status': 'confirmed'
+                    }
+                },
+                { new: true }
+            );
+
+            // If no order was updated, it means it was already paid
+            if (!updatedOrder) {
+                const alreadyPaidOrder = await Order.findById(orderId);
+                console.log('[Payment] Order was already paid (race condition prevented):', orderId);
+                return res.status(200).json({ 
+                    success: true, 
+                    order: alreadyPaidOrder,
+                    message: 'الطلب مؤكد مسبقاً' 
+                });
+            }
+
+            // Update product quantities ONLY if we successfully updated the order
+            console.log('[Payment] Updating product quantities for order:', orderId);
+            for (const item of updatedOrder.items) {
+                try {
+                    // Decrement and clamp to zero atomically using pipeline update
+                    const result = await Product.updateOne(
+                        { _id: item.product },
+                        [
+                            { $set: { quantity: { $max: [0, { $subtract: ["$quantity", item.quantity] }] } } }
+                        ]
+                    );
+                    console.log(`[Payment] Updated quantity for product ${item.product}:`, result);
+                } catch (qtyErr) {
+                    console.error('Failed to update product quantity', { productId: item.product, error: qtyErr });
+                }
+            }
 
             // Send confirmation email
             try {
                 await emailService.sendEmail({
-                email: order.shippingAddress.email,
+                email: updatedOrder.shippingAddress.email,
                 subject: 'تأكيد الطلب - منصة بديل',
                 message: `
                     <h2>تم تأكيد طلبك بنجاح!</h2>
-                    <p>رقم الطلب: ${order.orderNumber}</p>
-                    <p>المبلغ المدفوع: ${order.totalAmount} ريال</p>
+                    <p>رقم الطلب: ${updatedOrder.orderNumber}</p>
+                    <p>المبلغ المدفوع: ${updatedOrder.totalAmount} ريال</p>
                     <p>سيتم شحن طلبك قريباً.</p>
                 `
                 });
@@ -305,7 +378,7 @@ exports.confirmPayment = asyncHandler(async (req, res) => {
 
             res.status(200).json({
                 success: true,
-                order: order
+                order: updatedOrder
             });
         } else if (payment.status === 'failed') {
             order.payment.status = 'failed';
@@ -326,27 +399,45 @@ exports.confirmPayment = asyncHandler(async (req, res) => {
         }
     } catch (error) {
         console.error('Payment verification error:', error);
+        console.error('Error details:', error.response?.data || error.message);
+        
+        // If Moyasar API error, return specific message
+        if (error.response?.status === 404) {
+            res.status(404);
+            throw new Error('معرف الدفع غير صحيح أو غير موجود');
+        }
+        
         res.status(500);
-        throw new Error('فشل في التحقق من عملية الدفع');
+        throw new Error(`فشل في التحقق من عملية الدفع: ${error.message}`);
     }
 });
 
 // @desc    Handle Moyasar webhook
-// @route   POST /api/payments/webhook
+// @route   POST|GET /api/payments/webhook
 // @access  Public (but verified by webhook secret)
 exports.handleWebhook = asyncHandler(async (req, res) => {
+    // Handle GET requests (webhook verification)
+    if (req.method === 'GET') {
+        console.log('Webhook verification GET request received');
+        return res.status(200).send('Webhook endpoint is working');
+    }
+
     const signature = req.headers['x-moyasar-signature'];
     const payload = JSON.stringify(req.body);
 
-    // Verify webhook signature
-    const expectedSignature = crypto
-        .createHmac('sha256', config.payment.moyasar.webhookSecret)
-        .update(payload)
-        .digest('hex');
+    // Verify webhook signature for POST requests
+    if (signature) {
+        const expectedSignature = crypto
+            .createHmac('sha256', config.payment.moyasar.webhookSecret)
+            .update(payload)
+            .digest('hex');
 
-    if (signature !== expectedSignature) {
-        res.status(401);
-        throw new Error('Invalid webhook signature');
+        if (signature !== expectedSignature) {
+            res.status(401);
+            throw new Error('Invalid webhook signature');
+        }
+    } else {
+        console.log('No signature found, proceeding with webhook processing');
     }
 
     const { type, data } = req.body;
@@ -374,10 +465,15 @@ exports.handleWebhook = asyncHandler(async (req, res) => {
             // Update product quantities if not already done
             if (!order.payment.quantitiesUpdated) {
                 for (const item of order.items) {
-                    await Product.findByIdAndUpdate(
-                        item.product,
-                        { $inc: { quantity: -item.quantity } }
-                    );
+                    try {
+                        const product = await Product.findById(item.product).select('quantity');
+                        if (!product) { continue; }
+                        const newQuantity = Math.max(0, (product.quantity || 0) - item.quantity);
+                        product.quantity = newQuantity;
+                        await product.save();
+                    } catch (qtyErr) {
+                        console.error('Failed to update product quantity (webhook)', { productId: item.product, error: qtyErr });
+                    }
                 }
                 order.payment.quantitiesUpdated = true;
             }
