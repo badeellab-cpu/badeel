@@ -254,8 +254,9 @@ exports.requestSizeLimit = (maxSize = '10mb') => {
 
 // Suspicious activity detection
 exports.suspiciousActivityDetector = (req, res, next) => {
-    // Skip in development mode
-    if (process.env.NODE_ENV === 'development') {
+    // Skip in development mode OR for localhost requests
+    if (process.env.NODE_ENV === 'development' || 
+        req.ip === '::1' || req.ip === '127.0.0.1' || req.ip === 'localhost') {
         return next();
     }
     

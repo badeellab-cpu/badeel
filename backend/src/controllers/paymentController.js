@@ -198,12 +198,56 @@ exports.createPayment = asyncHandler(async (req, res) => {
                 await emailService.sendEmail({
                     email: customerInfo.email,
                     subject: 'تأكيد الطلب - منصة بديل',
-                    message: `
-                        <h2>تم تأكيد طلبك بنجاح!</h2>
-                        <p>رقم الطلب: ${order.orderNumber}</p>
-                        <p>المبلغ الإجمالي: ${order.totalAmount} ريال</p>
-                        <p>طريقة الدفع: الدفع عند الاستلام</p>
-                        <p>سيتم التواصل معك قريباً لتأكيد التوصيل.</p>
+                    html: `
+                        <div style="font-family: Arial, sans-serif; direction: rtl; text-align: right; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                            <h2 style="color: #2563eb; text-align: center;">تم تأكيد طلبك بنجاح! ✅</h2>
+                            <hr style="border: 1px solid #eee; margin: 20px 0;">
+                            
+                            <h3>تفاصيل الطلب:</h3>
+                            <p><strong>رقم الطلب:</strong> ${order.orderNumber}</p>
+                            <p><strong>المبلغ الإجمالي:</strong> ${order.totalAmount} ريال</p>
+                            <p><strong>طريقة الدفع:</strong> الدفع عند الاستلام 💰</p>
+                            <p><strong>تاريخ الطلب:</strong> ${new Date(order.createdAt).toLocaleDateString('ar-SA')}</p>
+                            
+                            <h3>عنوان التوصيل:</h3>
+                            <p>${order.shippingAddress.fullName}</p>
+                            <p>${order.shippingAddress.address}</p>
+                            <p>${order.shippingAddress.city}, ${order.shippingAddress.region}</p>
+                            <p>الرمز البريدي: ${order.shippingAddress.postalCode}</p>
+                            <p>الهاتف: ${order.shippingAddress.phone}</p>
+                            
+                            <h3>المنتجات المطلوبة:</h3>
+                            <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+                                <thead>
+                                    <tr style="background-color: #f8f9fa;">
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">المنتج</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">الكمية</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">السعر</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${order.items.map(item => `
+                                        <tr>
+                                            <td style="border: 1px solid #ddd; padding: 8px;">${item.productName}</td>
+                                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.quantity}</td>
+                                            <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">${(item.price * item.quantity).toLocaleString('ar-SA')} ريال</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            
+                            <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #ffeaa7;">
+                                <p><strong>⚠️ ملاحظة مهمة:</strong></p>
+                                <p>سيتم التواصل معك قريباً لتأكيد التوصيل</p>
+                                <p>يُرجى التأكد من توفر المبلغ نقداً عند الاستلام</p>
+                            </div>
+                            
+                            <hr style="border: 1px solid #eee; margin: 20px 0;">
+                            <p style="text-align: center; color: #666;">
+                                شكراً لاختيارك منصة بديل 🧪<br>
+                                <a href="mailto:badeel.lab@gmail.com" style="color: #2563eb;">badeel.lab@gmail.com</a>
+                            </p>
+                        </div>
                     `
                 });
             } catch (emailError) {
@@ -365,11 +409,55 @@ exports.confirmPayment = asyncHandler(async (req, res) => {
                 await emailService.sendEmail({
                 email: updatedOrder.shippingAddress.email,
                 subject: 'تأكيد الطلب - منصة بديل',
-                message: `
-                    <h2>تم تأكيد طلبك بنجاح!</h2>
-                    <p>رقم الطلب: ${updatedOrder.orderNumber}</p>
-                    <p>المبلغ المدفوع: ${updatedOrder.totalAmount} ريال</p>
-                    <p>سيتم شحن طلبك قريباً.</p>
+                html: `
+                    <div style="font-family: Arial, sans-serif; direction: rtl; text-align: right; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                        <h2 style="color: #2563eb; text-align: center;">تم تأكيد طلبك بنجاح! ✅</h2>
+                        <hr style="border: 1px solid #eee; margin: 20px 0;">
+                        
+                        <h3>تفاصيل الطلب:</h3>
+                        <p><strong>رقم الطلب:</strong> ${updatedOrder.orderNumber}</p>
+                        <p><strong>المبلغ المدفوع:</strong> ${updatedOrder.totalAmount} ريال</p>
+                        <p><strong>طريقة الدفع:</strong> بطاقة ائتمان</p>
+                        <p><strong>تاريخ الطلب:</strong> ${new Date(updatedOrder.createdAt).toLocaleDateString('ar-SA')}</p>
+                        
+                        <h3>عنوان التوصيل:</h3>
+                        <p>${updatedOrder.shippingAddress.fullName}</p>
+                        <p>${updatedOrder.shippingAddress.address}</p>
+                        <p>${updatedOrder.shippingAddress.city}, ${updatedOrder.shippingAddress.region}</p>
+                        <p>الرمز البريدي: ${updatedOrder.shippingAddress.postalCode}</p>
+                        <p>الهاتف: ${updatedOrder.shippingAddress.phone}</p>
+                        
+                        <h3>المنتجات المطلوبة:</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+                            <thead>
+                                <tr style="background-color: #f8f9fa;">
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">المنتج</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">الكمية</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">السعر</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${updatedOrder.items.map(item => `
+                                    <tr>
+                                        <td style="border: 1px solid #ddd; padding: 8px;">${item.productName}</td>
+                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.quantity}</td>
+                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">${(item.price * item.quantity).toLocaleString('ar-SA')} ريال</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        
+                        <div style="background-color: #f0f9ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <p><strong>📦 سيتم شحن طلبك خلال 2-5 أيام عمل</strong></p>
+                            <p>ستصلك رسالة SMS بتفاصيل الشحنة عند التوصيل</p>
+                        </div>
+                        
+                        <hr style="border: 1px solid #eee; margin: 20px 0;">
+                        <p style="text-align: center; color: #666;">
+                            شكراً لاختيارك منصة بديل 🧪<br>
+                            <a href="mailto:badeel.lab@gmail.com" style="color: #2563eb;">badeel.lab@gmail.com</a>
+                        </p>
+                    </div>
                 `
                 });
             } catch (emailError) {
